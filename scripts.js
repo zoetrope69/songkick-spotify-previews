@@ -1,5 +1,6 @@
 const extensionName = '[Songkick Spotify Preview Extension] ';
-const debug = true;
+const debug = false;
+
 let artists = [];
 const sidebarElement = document.querySelector('.container .secondary');
 const loadingTracksPlaceholder = '<div class="loading">Loading...</div>';
@@ -121,8 +122,6 @@ function findArtist(query) {
           return reject(data.error.message);
         }
 
-        console.log(data);
-
         if (data.artists.total <= 0) {
           return reject(`Spotify found no artists with query: "${query}".`);
         }
@@ -221,7 +220,6 @@ function injectLoaderIntoPage(data) {
 }
 
 function injectTrackIntoPage(track) {
-  console.log(track);
   const spotifyTracksContentElement = document.querySelector('.spotify-tracks-content ol');
 
   const html = `
