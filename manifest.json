@@ -1,0 +1,24 @@
+{
+  "name": "Songkick Spotify Previews",
+  "description": "Add 30 second Spotify previews to Songkick pages",
+  "version": "1.0",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "author": "Zac Colley",
+  "homepage_url": "https://github.com/zaccolley/songkick-spotify-previews",
+  "content_scripts": [
+  {
+    "matches": ["*://www.songkick.com/*"],
+    "css": ["style.css"],
+    "js": ["scripts.js"]
+  }
+  ],
+  "permissions": [
+  "tabs", "*://www.songkick.com/*"
+  ],
+  "manifest_version": 2,
+  "minimum_chrome_version": "42"
+}
