@@ -5,7 +5,8 @@
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
-    "128": "icon128.png"
+    "128": "icon128.png",
+    "512": "icon512.png"
   },
   "author": "Zac Colley",
   "homepage_url": "https://github.com/zaccolley/songkick-spotify-previews",
