@@ -1,7 +1,14 @@
 # songkick-spotify-previews
 
-A Chrome extension to add 30 second Spotify previews to Songkick pages
+a chrome extension to add 30 second Spotify previews to Songkick pages
 
-![store-screenshot.png](Screenshot of the Chrome extension in action)
+_uses the spotify web api_
 
+## install
+
+can install it via the chrome web store:
 https://chrome.google.com/webstore/detail/songkick-spotify-previews/dhiagiejffhdgpipbmcpcncepoicbhkb
+
+## screenshot
+
+![Screenshot of the Chrome extension in action](store-screenshot.png)
