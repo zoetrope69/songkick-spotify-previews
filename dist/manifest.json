@@ -1,7 +1,7 @@
 {
   "name": "Songkick Spotify Previews",
   "description": "Add 30 second Spotify previews to Songkick pages",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "icons": {
     "16": "icon16.png",
     "48": "icon48.png",
@@ -13,7 +13,7 @@
   "content_scripts": [
   {
     "matches": ["*://www.songkick.com/*"],
-    "css": ["style.min.css"],
+    "css": ["styles.min.css"],
     "js": ["scripts.min.js"]
   }
   ],
