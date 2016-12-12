@@ -5,17 +5,6 @@ let artists = [];
 const sidebarElement = document.querySelector('.container .secondary');
 const loadingTracksPlaceholder = '<div class="loading">Loading...</div>';
 
-function onlyOneTrackPlayingAtOnce() {
-  document.addEventListener('play', function(e){
-    var audios = document.getElementsByTagName('audio');
-    for(var i = 0, len = audios.length; i < len;i++){
-        if(audios[i] != e.target){
-            audios[i].pause();
-        }
-    }
-  }, true);
-}
-
 function handleError(error) {
   debug && console.error(extensionName + 'Error:', error);
 }
@@ -289,8 +278,30 @@ function getTopTrackInfo(data) {
   });
 }
 
-function processSpotifyArtists(artists) {
-  return artists.map(artist => artist.name).join(', ');
+function handleAudioPlayback() {
+  const container = document.querySelector('.spotify-tracks');
+
+  // only play one at a time
+  container.addEventListener('play', function(e) {
+    const audios = container.querySelectorAll('.track-audio');
+    debug && console.info(extensionName, e);
+    for (let i = 0; i < audios.length; i++) {
+      if (audios[i] !== e.target) {
+        audios[i].pause();
+      }
+    }
+  }, true);
+
+  // autoplay the next song in the list
+  container.addEventListener('ended', function(e) {
+    const audios = container.querySelectorAll('.track-audio');
+    debug && console.info(extensionName, e);
+    for (var i = 0; i < audios.length; i++) {
+      if (audios[i] === e.target && i !== audios.length) {
+        audios[i + 1].play();
+      }
+    }
+  }, true);
 }
 
 function injectComponentIntoPage(data) {
@@ -319,6 +330,8 @@ function injectComponentIntoPage(data) {
     `;
 
     sidebarElement.innerHTML = html + sidebarElement.innerHTML;
+
+    handleAudioPlayback();
 
     resolve(data);
   });
@@ -349,8 +362,6 @@ function injectTrackIntoPage(track) {
 }
 
 debug && console.info(extensionName + 'Starting script');
-
-onlyOneTrackPlayingAtOnce();
 
 findArtistsInPage()
   .then(sanitizeArtists)
