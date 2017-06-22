@@ -3,15 +3,65 @@ const debug = false;
 
 let artists = [];
 const sidebarElement = document.querySelector('.container .secondary');
+
 const loadingTracksPlaceholder = '<div class="loading">Loading...</div>';
+
+let accessCode;
 
 function handleError(error) {
   debug && console.error(extensionName + 'Error:', error);
 }
 
+function authenticateSpotify() {
+  return new Promise((resolve, reject) => {
+    accessCode = localStorage.getItem('songkickSpotifyPreviewsAccessCode');
+
+    if (accessCode) {
+      return resolve();
+    }
+
+    // if we're calling back from spotify grab the access code, store it for later and redirect
+    const accessTokenString = '#access_token=';
+    if (location.hash.includes(accessTokenString)) {
+      accessCode = location.hash.split('&')[0].substr(accessTokenString.length);
+      localStorage.setItem('songkickSpotifyPreviewsAccessCode', accessCode);
+
+      // redirect if a uri set before
+      const redirectUri = localStorage.getItem('songkickSpotifyPreviewsRedirect');
+      if (redirectUri) {
+        location.href = redirectUri;
+      }
+    }
+
+    if (!sidebarElement) {
+      return reject('No sidebar element to inject authenticate button');
+    }
+
+    debug && console.info('Didnt find a access code. Injecting button')
+
+    const clientId = '342ffb8efaae40499cf5dee5ea247230';
+    const redirectUri = 'https://songkick.com';
+
+    const html = `
+      <div class="component spotify-tracks">
+        <div class="spotify-tracks-content">
+          <h5>Tracks from Spotify</h5>
+          <br />
+          <a class="button" href="https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}">
+            Authenticate with Spotify
+          </a>
+        </div>
+      </div>
+    `;
+
+    sidebarElement.innerHTML = html + sidebarElement.innerHTML
+    localStorage.setItem('songkickSpotifyPreviewsRedirect', location.href);
+    return reject('No access code, waiting for user to authenticate...');
+  })
+}
+
 function findArtistsInPage() {
   return new Promise((resolve, reject) => {
-
     var currentPath = window.location.pathname;
     var isArtistPage = currentPath.includes('/artists/');
     var isConcertPage = currentPath.includes('/concerts/');
@@ -205,7 +255,9 @@ function findArtist(query) {
   debug && console.info(extensionName + `Searching Spotify for artist with the query: "${query}".`);
 
   return new Promise((resolve, reject) => {
-    return fetch(url)
+    const headers = new Headers();
+    headers.append('Authorization', 'Bearer ' + accessCode);
+    return fetch(url, { headers })
       .then(response => response.json())
       .then(data => {
         if (data.error) {
@@ -248,7 +300,9 @@ function getTopTrack(id) {
               '?country=GB' +
               '&limit=10';
 
-  return fetch(url).then(response => response.json());
+  const headers = new Headers();
+  headers.append('Authorization', 'Bearer ' + accessCode);
+  return fetch(url, { headers }).then(response => response.json());
 }
 
 function getTopTrackInfo(data) {
@@ -363,7 +417,8 @@ function injectTrackIntoPage(track) {
 
 debug && console.info(extensionName + 'Starting script');
 
-findArtistsInPage()
+authenticateSpotify()
+  .then(findArtistsInPage)
   .then(sanitizeArtists)
   .then(getTracks)
   .catch(handleError);
