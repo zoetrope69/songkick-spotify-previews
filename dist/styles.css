@@ -8,13 +8,6 @@
   color: #7b5c5c;
 }
 
-.spotify-tracks h5 {
-  background-image: url('https://assets.sk-static.com/assets/nw/components/taste-imports-form/spotify-logo-00073a2.png');
-  background-position: right center;
-  background-size: auto 80%;
-  background-repeat: no-repeat;
-}
-
 .spotify-tracks ol > li {
   overflow: hidden;
   margin-bottom: 10px;
@@ -55,4 +48,34 @@
 
 .spotify-tracks .track-audio {
   width: 100%;
+}
+
+.spotify-tracks-content-info {
+  display: block;
+  
+  border-top: 1px dashed #c7c7c7;
+  padding-top: 10px;
+}
+
+.spotify-tracks .button-spotify {
+  width: 100%;
+  padding: 9px 0;
+  padding-left: 61px;
+
+  color: #fff;
+  font-size: 16px !important;
+  text-align: left;
+  font-size: 16px;
+  text-transform: none;
+  font-weight: 400;
+
+  line-height: 32px;
+
+  background-color: #1db954;
+  background-image: url('https://assets.sk-static.com/assets/nw/elements/dashboard-taste-import-spotify/spotify-logo-with-text-svg@2x-df0a517.png');
+  background-size: 24px;
+  background-position: 26px 14px;
+
+  border-radius: 2px;
+  border: none;
 }
