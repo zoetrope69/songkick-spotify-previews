@@ -1,5 +1,8 @@
+const SPOTIFY_CLIENT_ID = '342ffb8efaae40499cf5dee5ea247230';
+const SPOTIFY_REDIRECT_URL = 'https://songkick.com';
+
 const extensionName = '[Songkick Spotify Preview Extension] ';
-const debug = false;
+const debug = true;
 
 let artists = [];
 const sidebarElement = document.querySelector('.container .secondary');
@@ -16,48 +19,71 @@ function authenticateSpotify() {
   return new Promise((resolve, reject) => {
     accessCode = localStorage.getItem('songkickSpotifyPreviewsAccessCode');
 
-    if (accessCode) {
+    isStillAuthenticated().then(() => {
+      // access code is alive and well
       return resolve();
-    }
-
-    // if we're calling back from spotify grab the access code, store it for later and redirect
-    const accessTokenString = '#access_token=';
-    if (location.hash.includes(accessTokenString)) {
-      accessCode = location.hash.split('&')[0].substr(accessTokenString.length);
-      localStorage.setItem('songkickSpotifyPreviewsAccessCode', accessCode);
-
-      // redirect if a uri set before
-      const redirectUri = localStorage.getItem('songkickSpotifyPreviewsRedirect');
-      if (redirectUri) {
-        location.href = redirectUri;
+    })
+    .catch(error => {
+      if (error) {
+        console.error(error)
       }
-    }
 
-    if (!sidebarElement) {
-      return reject('No sidebar element to inject authenticate button');
-    }
+      if (redirectIfAccessTokenInURL()) {
+        return
+      }
 
-    debug && console.info('Didnt find a access code. Injecting button')
+      injectAuthenticationButton();
 
-    const clientId = '342ffb8efaae40499cf5dee5ea247230';
-    const redirectUri = 'https://songkick.com';
-
-    const html = `
-      <div class="component spotify-tracks">
-        <div class="spotify-tracks-content">
-          <h5>Tracks from Spotify</h5>
-          <br />
-          <a class="button" href="https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${redirectUri}">
-            Authenticate with Spotify
-          </a>
-        </div>
-      </div>
-    `;
-
-    sidebarElement.innerHTML = html + sidebarElement.innerHTML
-    localStorage.setItem('songkickSpotifyPreviewsRedirect', location.href);
-    return reject('No access code, waiting for user to authenticate...');
+      return reject('No access code, waiting for user to authenticate...');
+    })
   })
+}
+
+function redirectIfAccessTokenInURL() {
+  // if we're calling back from spotify grab the access code, store it for later and redirect
+  const accessTokenString = '#access_token=';
+  const urlIncludesAccessToken = location.hash.includes(accessTokenString)
+  if (!urlIncludesAccessToken) {
+    return false
+  }
+  
+  accessCode = location.hash.split('&')[0].substr(accessTokenString.length);
+  localStorage.setItem('songkickSpotifyPreviewsAccessCode', accessCode);
+
+  // redirect if a uri set before
+  const redirectUri = localStorage.getItem('songkickSpotifyPreviewsRedirect');
+  if (!redirectUri) {
+    return false;
+  }
+
+  location.href = redirectUri;
+
+  return true;
+}
+
+function injectAuthenticationButton() {
+  if (!sidebarElement) {
+    return reject('No sidebar element to inject authenticate button');
+  }
+
+  debug && console.info('Didnt find an access code. Injecting button')
+
+  const authenticationUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${SPOTIFY_REDIRECT_URL}`
+
+  const html = `
+    <div class="component spotify-tracks">
+      <div class="spotify-tracks-content">
+        <h5>Tracks from Spotify</h5>
+        <br />
+        <a class="button button-spotify" href="${authenticationUrl}">
+          Authenticate with Spotify
+        </a>
+      </div>
+    </div>
+  `;
+
+  sidebarElement.innerHTML = html + sidebarElement.innerHTML
+  localStorage.setItem('songkickSpotifyPreviewsRedirect', location.href);
 }
 
 function findArtistsInPage() {
@@ -246,6 +272,31 @@ function sanitizeString(string) {
     .trim();
 }
 
+function isStillAuthenticated() {
+  return new Promise((resolve, reject) => {
+    const url = 'https://api.spotify.com/v1/me'
+
+    debug && console.info(extensionName + `Doing a basic call to get user data.`);
+
+    const headers = new Headers();
+    headers.append('Authorization', 'Bearer ' + accessCode);
+    return fetch(url, { headers })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          return reject(data.error.message);
+        }
+
+        if (data.id) {
+          localStorage.setItem('songkickSpotifyPreviewsSpotifyId', data.id)
+        }
+
+        return resolve();
+      })
+      .catch(reject)
+  })
+}
+
 function findArtist(query) {
   const url = 'https://api.spotify.com/v1/search' +
               `?q=${query}` +
@@ -373,17 +424,48 @@ function injectComponentIntoPage(data) {
 
     debug && console.info(extensionName + 'Injecting component into page.');
 
+    const spotifyUserId = localStorage.getItem('songkickSpotifyPreviewsSpotifyId')
+
+    const authenticateString = spotifyUserId ? `Authenticated as ${spotifyUserId}. ` : ''
+
+    const spotifyInfoHtml = `
+      <small class="spotify-tracks-content-info">
+        ${authenticateString}
+      </small>
+    `
+
     const html = `
       <div class="component spotify-tracks">
         <div class="spotify-tracks-content">
           <h5>Tracks from Spotify</h5>
 
           <ol></ol>
+          ${spotifyInfoHtml}
         </div>
       </div>
     `;
 
-    sidebarElement.innerHTML = html + sidebarElement.innerHTML;
+    const oldSidebarHTML = sidebarElement.innerHTML
+    sidebarElement.innerHTML = html + oldSidebarHTML;
+
+    const deauthenticateButtonEl = document.createElement('a')
+    deauthenticateButtonEl.role = 'button'
+    deauthenticateButtonEl.href = '#'
+    deauthenticateButtonEl.innerHTML = 'Deauthenticate'
+    deauthenticateButtonEl.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      // remove stored content
+      localStorage.removeItem('songkickSpotifyPreviewsRedirect');
+      localStorage.removeItem('songkickSpotifyPreviewsAccessCode');
+      localStorage.removeItem('songkickSpotifyPreviewsSpotifyId');
+
+      // refresh page
+      window.location.reload();
+    })
+
+    const sidebarInfoElement = sidebarElement.querySelector('.spotify-tracks-content-info')
+    sidebarInfoElement.append(deauthenticateButtonEl)
 
     handleAudioPlayback();
 
