@@ -2,7 +2,7 @@ const SPOTIFY_CLIENT_ID = '342ffb8efaae40499cf5dee5ea247230';
 const SPOTIFY_REDIRECT_URL = 'https://songkick.com';
 
 const extensionName = '[Songkick Spotify Preview Extension] ';
-const debug = true;
+const debug = false;
 
 let artists = [];
 const sidebarElement = document.querySelector('.container .secondary');
