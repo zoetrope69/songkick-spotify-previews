@@ -1,8 +1,7 @@
 const SPOTIFY_CLIENT_ID = '342ffb8efaae40499cf5dee5ea247230';
 const SPOTIFY_REDIRECT_URL = 'https://songkick.com';
-
-const extensionName = '[Songkick Spotify Preview Extension] ';
-const debug = false;
+const DEBUG_MODE = false;
+const EXTENSION_NAME = '[Songkick Spotify Preview Extension] ';
 
 let artists = [];
 const sidebarElement = document.querySelector('.container .secondary');
@@ -12,7 +11,7 @@ const loadingTracksPlaceholder = '<div class="loading">Loading...</div>';
 let accessCode;
 
 function handleError(error) {
-  debug && console.error(extensionName + 'Error:', error);
+  DEBUG_MODE && console.error(EXTENSION_NAME + 'Error:', error);
 }
 
 function authenticateSpotify() {
@@ -66,7 +65,7 @@ function injectAuthenticationButton() {
     return reject('No sidebar element to inject authenticate button');
   }
 
-  debug && console.info('Didnt find an access code. Injecting button')
+  DEBUG_MODE && console.info('Didnt find an access code. Injecting button')
 
   const authenticationUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=token&redirect_uri=${SPOTIFY_REDIRECT_URL}`
 
@@ -129,7 +128,7 @@ function findArtistsInPage() {
         artists.push(artistLink.innerHTML.trim());
       }
 
-      debug && console.info(extensionName + 'Artists found in page:', artists);
+      DEBUG_MODE && console.info(EXTENSION_NAME + 'Artists found in page:', artists);
       resolve(artists);
     }
 
@@ -148,11 +147,11 @@ function findArtistsInPage() {
         artists.push(artistLink.innerHTML);
       }
 
-      debug && console.info(extensionName + 'Artists found in page:', artists);
+      DEBUG_MODE && console.info(EXTENSION_NAME + 'Artists found in page:', artists);
       resolve(artists);
     }
 
-    debug && console.info(extensionName + 'Script didn\'t run on this page');
+    DEBUG_MODE && console.info(EXTENSION_NAME + 'Script didn\'t run on this page');
   });
 }
 
@@ -276,7 +275,7 @@ function isStillAuthenticated() {
   return new Promise((resolve, reject) => {
     const url = 'https://api.spotify.com/v1/me'
 
-    debug && console.info(extensionName + `Doing a basic call to get user data.`);
+    DEBUG_MODE && console.info(EXTENSION_NAME + `Doing a basic call to get user data.`);
 
     const headers = new Headers();
     headers.append('Authorization', 'Bearer ' + accessCode);
@@ -303,7 +302,7 @@ function findArtist(query) {
               '&type=artist' +
               '&limit=10';
 
-  debug && console.info(extensionName + `Searching Spotify for artist with the query: "${query}".`);
+  DEBUG_MODE && console.info(EXTENSION_NAME + `Searching Spotify for artist with the query: "${query}".`);
 
   return new Promise((resolve, reject) => {
     const headers = new Headers();
@@ -319,7 +318,7 @@ function findArtist(query) {
           return reject(`Spotify found no artists with the query: "${query}".`);
         }
 
-        debug && console.info(extensionName + `Results from Spotify with the query: "${query}".`, data.artists);
+        DEBUG_MODE && console.info(EXTENSION_NAME + `Results from Spotify with the query: "${query}".`, data.artists);
 
         const items = data.artists.items;
 
@@ -389,7 +388,7 @@ function handleAudioPlayback() {
   // only play one at a time
   container.addEventListener('play', function(e) {
     const audios = container.querySelectorAll('.track-audio');
-    debug && console.info(extensionName, e);
+    DEBUG_MODE && console.info(EXTENSION_NAME, e);
     for (let i = 0; i < audios.length; i++) {
       if (audios[i] !== e.target) {
         audios[i].pause();
@@ -400,7 +399,7 @@ function handleAudioPlayback() {
   // autoplay the next song in the list
   container.addEventListener('ended', function(e) {
     const audios = container.querySelectorAll('.track-audio');
-    debug && console.info(extensionName, e);
+    DEBUG_MODE && console.info(EXTENSION_NAME, e);
     for (var i = 0; i < audios.length; i++) {
       if (audios[i] === e.target && i !== audios.length) {
         audios[i + 1].play();
@@ -422,7 +421,7 @@ function injectComponentIntoPage(data) {
       return reject('No sidebar panel to inject content into');
     }
 
-    debug && console.info(extensionName + 'Injecting component into page.');
+    DEBUG_MODE && console.info(EXTENSION_NAME + 'Injecting component into page.');
 
     const spotifyUserId = localStorage.getItem('songkickSpotifyPreviewsSpotifyId')
 
@@ -476,7 +475,7 @@ function injectComponentIntoPage(data) {
 function injectTrackIntoPage(track) {
   const spotifyTracksContentElement = document.querySelector('.spotify-tracks-content ol');
 
-  debug && console.info(extensionName + `Injecting ${track.name} into component.`, track.external_urls.spotify);
+  DEBUG_MODE && console.info(EXTENSION_NAME + `Injecting ${track.name} into component.`, track.external_urls.spotify);
 
   const html = `
     <li>
@@ -497,7 +496,7 @@ function injectTrackIntoPage(track) {
   spotifyTracksContentElement.innerHTML += html;
 }
 
-debug && console.info(extensionName + 'Starting script');
+DEBUG_MODE && console.info(EXTENSION_NAME + 'Starting script');
 
 authenticateSpotify()
   .then(findArtistsInPage)
